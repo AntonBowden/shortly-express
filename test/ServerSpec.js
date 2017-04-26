@@ -1,6 +1,8 @@
 var expect = require('chai').expect;
 var request = require('request');
 
+var bcrypt = require('bcrypt-nodejs');
+
 var app = require('../shortly.js');
 var db = require('../app/config');
 var Users = require('../app/collections/users');
@@ -82,7 +84,7 @@ describe('', function() {
       // create a user that we can then log-in with
       new User({
         'username': 'Phillip',
-        'password': 'Phillip'
+        'password':  bcrypt.hashSync('Phillip', null)
       }).save().then(function() {
         var options = {
           'method': 'POST',
@@ -232,7 +234,7 @@ describe('', function() {
 
     it('Redirects to login page if a user tries to access the main page and is not signed in', function(done) {
       request('http://127.0.0.1:4568/', function(error, res, body) {
-        console.log(res.req.path);
+        // console.log(res.req.path);
         expect(res.req.path).to.equal('/login');
         done();
       });
@@ -309,7 +311,7 @@ describe('', function() {
     beforeEach(function(done) {
       new User({
         'username': 'Phillip',
-        'password': 'Phillip'
+        'password': bcrypt.hashSync('Phillip', null)
       }).save().then(function() {
         done();
       });

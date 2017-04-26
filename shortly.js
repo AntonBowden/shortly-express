@@ -3,6 +3,7 @@ var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
 var session = require('express-session');
+var bcrypt = require('bcrypt-nodejs');
 
 
 var db = require('./app/config');
@@ -42,7 +43,6 @@ app.get('/', function(req, res) {
 });
 
 app.get('/create', function(req, res) {
-  // console.log(req.session.user);
   if (req.session.user) {
     res.render('index');
   } else {
@@ -51,25 +51,16 @@ app.get('/create', function(req, res) {
 });
 
 app.get('/login', function(req, res) {
-  // check if user is authenticated
-  //if (req.session.isLoggedIn) {}
-  // if yes
-    // redirect back to home page
-  // if no
-    // render the login page
-
   res.render('login');
 });
 
 app.post('/login', function(req, res) {
-  // console.log(req.session);
-
   db.knex.select('username', 'password').from('users')
   .where('username', req.body.username)
   .then((users) => {
     if (users.length) {
       var password = users[0].password;
-      if (req.body.password === password) {
+      if ( bcrypt.compareSync(req.body.password, password) ) {
         req.session.user = req.body.username;
         res.redirect('/');
       }
@@ -78,31 +69,30 @@ app.post('/login', function(req, res) {
     }
   });
 
+});
 
-  // new User(req.body);
-
-
+app.get('/signup', function(req, res) {
+  res.render('signup');
 });
 
 app.post('/signup', function(req, res) {
 
-  var x = new User({
+  var newUser = new User({
     username: req.body.username,
-    password: req.body.password
-  })
+    password: bcrypt.hashSync(req.body.password, null)
+  });
 
   db.knex.select('username', 'password').from('users')
   .where('username', req.body.username)
   .then((users) => {
     if (!users.length) {
-      x.save().then(() => {
+      newUser.save().then(() => {
         req.session.cookie.loggedIn = true;
         res.redirect('/');
       });
     } else {
       res.redirect('/signup');
     }
-    console.log(users);
   });
 
 
@@ -135,7 +125,6 @@ app.post('/links', function(req, res) {
           console.log('Error reading URL heading: ', err);
           return res.sendStatus(404);
         }
-
         Links.create({
           url: uri,
           title: title,
@@ -146,6 +135,15 @@ app.post('/links', function(req, res) {
         });
       });
     }
+  });
+});
+
+
+
+
+app.post('/logout', function(req, res) {
+  req.session.destroy(function() {
+    res.redirect('/login');
   });
 });
 

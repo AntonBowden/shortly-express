@@ -6,9 +6,14 @@ var Promise = require('bluebird');
 
 var User = db.Model.extend({
   tableName: 'users',
-  initialize: () => {
-    db.knex.table('users').insert({username: this.username, password: this.password});
+  // password: bcrypt.hashSync(this.password, null),
+  hashPasword: () => {
+    console.log(this);
+    this.password = bcrypt.hashSync(this.password, null);
   }
+  // initialize: () => {
+  //   // db.knex.table('users').insert({username: this.username, password: this.password});
+  // }
 });
 
 module.exports = User;
